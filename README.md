@@ -13,16 +13,16 @@
 
 
 ## Состав команды
-[Куликов Сергей Сергеевич](https://t.me/KulikovSS)
+[Куликов Сергей](https://t.me/KulikovSS)
 
 
-[Павлов Игорь Сергеевич](https://t.me/ispavlov)
+[Павлов Игорь](https://t.me/ispavlov)
 
 
-[Щербатюк Роман Русланович](https://t.me/Roman_Shch99)
+[Щербатюк Роман](https://t.me/Roman_Shch99)
 
 
-[Тодоров Дмитрий Андреевич](https://t.me/terrylimax)
+[Тодоров Дмитрий](https://t.me/terrylimax)
 
 ## Куратор
 [Тимур Ермешев](https://t.me/SofaViking)
