@@ -76,5 +76,5 @@
 * house_commisioned (object) -  информация о сдаче дома (сдан/ не сдан)
 * price_per_meter (float64) - цена за квадратный метр
 * deal_conditions (object) - тип условий заключения сделки при покупке недвижимости ('долевое участие (214-ФЗ)', 'свободная продажа', 'переуступка')
-* mortgage_availability (object) - доступность ипотеки
+* mortgage_availability (object) - возможно ли оформление ипотеки
 * transport_accessibility_score (float64) - оценка транспортной доступности от ЦИАН (при наличии)
