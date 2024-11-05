@@ -206,7 +206,7 @@ def parse_page(row, user_agent): #функция для парсинга стр�
                 page_data["kitchen_area"] = extract_numbers_list(spans[index + 1].text)[0]
 
             if span.text.strip() == "Отделка":
-                page_data["finishing_type"] = spans[index + 1].text
+                page_data["renovation_type"] = spans[index + 1].text
 
             if span.text.strip() == "Тип жилья":
                 page_data["housing_type"] = spans[index + 1].text
