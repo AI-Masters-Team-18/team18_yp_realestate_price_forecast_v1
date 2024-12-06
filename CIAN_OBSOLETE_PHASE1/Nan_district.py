@@ -1,3 +1,9 @@
+# OBSOLETE - не используется тк решили перейти к парсингу M2.ru
+# Игорь реализовывл геокодер для заполнения пропусков в столбце "district" на основе значения "residential_complex"
+import requests
+import json
+from bs4 import BeautifulSoup
+
 # Вписывается ваш токен для api запросов Я.карт
 TOKEN = 'a1c084ab-2715-4b05-8180-2be2f2cdec86'
 
@@ -5,8 +11,7 @@ TOKEN = 'a1c084ab-2715-4b05-8180-2be2f2cdec86'
 
 
 def find_district(x):
-    url = f"https://geocode-maps.yandex.ru/1.x/?geocode={
-        x}&format=json&apikey={TOKEN}"
+    url = f"https://geocode-maps.yandex.ru/1.x/?geocode={x}&format=json&apikey={TOKEN}"
     response = requests.get(url)
 
     tree = BeautifulSoup(response.content, 'html.parser')
@@ -21,11 +26,11 @@ def find_district(x):
 
 
 # Применение функции  find_district(x) для df
-df['district_Nan'] = df['residential_complex'].apply(
-    lambda x: find_district(x))
-df['district'].fillna(df['district_Nan'], inplace=True)
+# df['district_Nan'] = df['residential_complex'].apply(
+#     lambda x: find_district(x))
+# df['district'].fillna(df['district_Nan'], inplace=True)
 
-del df['district_Nan']
+# del df['district_Nan']
 
-# Выводим результат
-df.head()
+# # Выводим результат
+# df.head()
