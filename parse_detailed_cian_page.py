@@ -7,10 +7,12 @@ from bs4 import BeautifulSoup
 import re
 import random
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import time
 from random import randint
 from fake_useragent import UserAgent
+import undetected_chromedriver as uc
 
 # proxies = {
 # 'http': proxy,
@@ -61,8 +63,17 @@ def selenium_request(url,user_agent=None): #функция для запроса
     options.add_argument("--disable-gpu") # запуск без GPU, тк не показывается интерфейс
     options.add_argument("--no-sandbox") # отключение sandbox помогает избежать проблем с правами доступа и конфликтов в окружении
     options.add_argument(f"user-agent={user_agent.random}")
+    options.add_argument("--disable-blink-features=AutomationControlled") #для обхода защиты от ботов
+    options.add_argument("accept-language=en-US,en;q=0.9")
+    options.add_argument("referer=https://www.cian.ru/")  
+    options.add_argument("accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+
+    #driver = uc.Chrome(options=options)
     # options.add_argument(f'--proxy-server={random.choice(proxy_list)}') #выбираем случайный публичный прокси из списка
-    driver = webdriver.Chrome(options=options) # запуск браузера
+    driver = webdriver.Chrome(options=options) #инициализируем драйвер
+    # Устанавливаем ожидания
+    driver.set_page_load_timeout(30)  # Таймаут загрузки страницы
+    driver.implicitly_wait(10)        # Неявное ожидание для поиска элементов
     try: 
         driver.get(url)
     except Exception as e:
@@ -72,6 +83,13 @@ def selenium_request(url,user_agent=None): #функция для запроса
     if not html_code:
         print(f"Failed to get page {url}")
         return
+    if 'Ошибка - ЦианКажется' in html_code:
+        try:
+            time.sleep(randint(2, 5))
+            driver.get(url)
+        except Exception as e:
+            print(f"Error parsing {url}: {e}")
+            return None
     soup = BeautifulSoup(html_code, "html.parser")
     # Проверка на CAPTCHA
     if soup.find("div", {"class": "g-recaptcha"}):
@@ -105,17 +123,18 @@ def parse_page(row, user_agent): #функция для парсинга стр�
         print(f"Failed to get page {url}")
         return page_data
     detailed_page_soup = BeautifulSoup(html_text, 'html.parser')
-    print(detailed_page_soup.get_text()[:100])  # проверяем, что получили страницу
+    print(f'Получено {detailed_page_soup.get_text()[:100]}')  # проверяем, что получили страницу
     spans = detailed_page_soup.select("span") #ищем все теги span
     #сохраняем адрес
     try: 
-        found_geo = detailed_page_soup.find('div',{'data-name':'Geo'})
-        if found_geo:
-            print("found_geo")
-            address_tag = found_geo.find('span',{'itemprop': 'name'})
-            page_data['address'] = address_tag['content'] if address_tag else None
-        else:
-            print("Geo element not found.")
+        if detailed_page_soup.find('div',{'data-name':'Geo'}):
+            found_geo = detailed_page_soup.find('div',{'data-name':'Geo'})
+            if found_geo:
+                print("found_geo")
+                address_tag = found_geo.find('span',{'itemprop': 'name'})
+                page_data['address'] = address_tag['content'] if address_tag else None
+            else:
+                print("Geo element not found.")
     except Exception as e:
         print(f"Error parsing address data / url {url} {html_text[:100]}: {e}")
     #сохраняем минуты до метро
