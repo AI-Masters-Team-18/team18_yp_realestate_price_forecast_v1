@@ -1,4 +1,4 @@
-# ciam.ru
+# ciam.ru 
 Сначала мы хотели взять объявления о квартирах с Циана (данные доступны по [ссылке](https://docs.google.com/spreadsheets/d/1ELdfCPNquxhM2xncnTkmP54wVcz2wNFs/edit?usp=sharing&ouid=111936223586231967866&rtpof=true&sd=true))
 
 Первый датасет собрали с помощью функции [getflats()](https://github.com/lenarsaitov/cianparser/tree/main?tab=readme-ov-file#метод-get_flats) в общедоступном парсере [CianParser](https://github.com/lenarsaitov/cianparser/tree/main), Сергей добавил в функцию парсинг на основе метров и в результате мы собрали 89 тысяч записей батчами в диапазонах от ±15 м^2 и до максимально доступных значений площади от студий и до максимального доступного количества комнат. Позже отфильтровали продажи доль квартир (детали ниже) и объединили результаты парсинга в один датафрейм (смотри concatenate_dataset.py)
