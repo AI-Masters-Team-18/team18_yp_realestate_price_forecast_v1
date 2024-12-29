@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def main():
     st.sidebar.header("Загрузить файл")
     uploaded_file = st.sidebar.file_uploader("Выберите файл", type=["xlsx"])
@@ -43,8 +44,10 @@ def main():
             "Лифт", "Парковка", "Парк или зона отдыха", "Консьерж", "Вид из окна", "Территория",
             "Реновация", "Мебель", "Вид из окон"
         ]
-        df_filtered = df_filtered.drop(columns=[col for col in columns_to_drop if col in df_filtered.columns])
-        st.write(f"Столбцы: {columns_to_drop} мало влияют на стоимость квартиры, удалим их")
+        df_filtered = df_filtered.drop(
+            columns=[col for col in columns_to_drop if col in df_filtered.columns])
+        st.write(
+            f"Столбцы: {columns_to_drop} мало влияют на стоимость квартиры, удалим их")
 
         initial_size = df_filtered.shape[0]
         df_filtered = df_filtered.drop_duplicates()
@@ -55,7 +58,8 @@ def main():
         st.subheader("Пункт 1")
         columns_to_clean = ['до центра', 'Площадь квартиры', 'Жилая площадь', 'Высота потолков', 'цена',
                             'Площадь кухни']
-        st.write(f"Преобразуем значения столбцов {columns_to_clean} в числовой формат (float64), заменим запятые на точки, некорректные значения преобразуем в NaN, а затем заполним их медианой соответствующего столбца")
+        st.write(f"Преобразуем значения столбцов {
+                 columns_to_clean} в числовой формат (float64), заменим запятые на точки, некорректные значения преобразуем в NaN, а затем заполним их медианой соответствующего столбца")
         for column in columns_to_clean:
             df_filtered[column] = (
                 df_filtered[column]
@@ -64,14 +68,18 @@ def main():
                 .str.replace(',', '.', regex=False)
                 .str.extract(r'(-?\d+\.?\d*)')[0]
             )
-            df_filtered[column] = pd.to_numeric(df_filtered[column], errors='coerce')
+            df_filtered[column] = pd.to_numeric(
+                df_filtered[column], errors='coerce')
             if not df_filtered[column].isna().all():
-                df_filtered[column] = df_filtered[column].fillna(df_filtered[column].median())
+                df_filtered[column] = df_filtered[column].fillna(
+                    df_filtered[column].median())
 
         st.subheader("Пункт 2")
-        st.write("Преобразуем значения столбцов ['Этаж', 'Этажей в доме'] в целочисленный формат (int), некорректные значения заменим на NaN, а затем заполним их медианой соответствующего столбца.")
+        st.write(
+            "Преобразуем значения столбцов ['Этаж', 'Этажей в доме'] в целочисленный формат (int), некорректные значения заменим на NaN, а затем заполним их медианой соответствующего столбца.")
         df_filtered[['Этаж', 'Этажей в доме']] = df_filtered[['Этаж', 'Этажей в доме']].apply(
-            lambda col: pd.to_numeric(col, errors='coerce').fillna(col.median()).astype(int)
+            lambda col: pd.to_numeric(col, errors='coerce').fillna(
+                col.median()).astype(int)
         )
 
         st.subheader("Пункт 3")
@@ -87,7 +95,8 @@ def main():
 
         st.subheader("Пункт 4")
         st.write("Преобразуем значения столбца Год постройки в целочисленный формат (int), некорректные значения заменим на 0, чтобы обеспечить консистентность данных для дальнейшего анализа.")
-        df_filtered['Год постройки'] = df_filtered['Год постройки'].fillna(0).astype(int)
+        df_filtered['Год постройки'] = df_filtered['Год постройки'].fillna(
+            0).astype(int)
 
         st.subheader("Пункт 5")
         st.write("Объединим столбцы Год постройки и Срок сдачи в один столбец Год постройки, подставляя значения из Срок сдачи, если данные в Год постройки отсутствуют. Это упростит структуру данных и устранит дублирование.")
@@ -96,17 +105,20 @@ def main():
         df_filtered = df_filtered.drop(columns=['Срок сдачи'])
 
         st.subheader("Пункт 6")
-        st.write("Посмотрим на столбец Тип жилья. В нём содержатся значения: [nan, 'апартаменты']. Если тип жилья не указан (NaN), будем считать его квартирой. Заменим NaN на квартира.")
+        st.write(
+            "Посмотрим на столбец Тип жилья. В нём содержатся значения: [nan, 'апартаменты']. Если тип жилья не указан (NaN), будем считать его квартирой. Заменим NaN на квартира.")
         st.write(df_filtered['Тип жилья'].unique())
         df_filtered['Тип жилья'] = df_filtered['Тип жилья'].fillna('квартира')
 
         st.subheader("Пункт 7")
         st.write(
             "Посчитаем количество строк, где хотя бы один из столбцов: станция1, станция2 или станция3 имеет значение NaN.")
-        st.write(df_filtered[['станция1', 'станция2', 'станция3']].isna().any(axis=1).sum())
+        st.write(df_filtered[['станция1', 'станция2',
+                 'станция3']].isna().any(axis=1).sum())
         st.write(
             "Удалим эти строки, поскольку отсутствие данных о станциях может указывать на то, что квартиры находятся за пределами города.")
-        df_filtered = df_filtered.dropna(subset=['станция1', 'станция2', 'станция3'], how='any')
+        df_filtered = df_filtered.dropna(
+            subset=['станция1', 'станция2', 'станция3'], how='any')
         st.write(
             'Преобразуем значения столбцов время_до_станции1, пешком1, время_до_станции2, пешком2, время_до_станции3, пешком3 в целочисленный формат (int).')
         columns_to_convert = [
@@ -115,27 +127,33 @@ def main():
             'время_до_станции3', 'пешком3'
         ]
 
-        df_filtered[columns_to_convert] = df_filtered[columns_to_convert].astype(int)
+        df_filtered[columns_to_convert] = df_filtered[columns_to_convert].astype(
+            int)
         st.write(
             'Оставим только ближайшую станцию метро. Определим минимальное время из столбцов время_до_станции1, время_до_станции2, время_до_станции3. Сохраним её название, время и признак "пешком". Удалим данные о других станциях.')
         time_columns = [f'время_до_станции{i}' for i in range(1, 4)]
         station_columns = [f'станция{i}' for i in range(1, 4)]
         walk_columns = [f'пешком{i}' for i in range(1, 4)]
 
-        min_indices = df_filtered[time_columns].idxmin(axis=1).str.extract(r'(\d)')[0].astype(int) - 1
+        min_indices = df_filtered[time_columns].idxmin(
+            axis=1).str.extract(r'(\d)')[0].astype(int) - 1
 
-        df_filtered['станция'] = df_filtered[station_columns].to_numpy()[range(len(df_filtered)), min_indices]
-        df_filtered['время'] = df_filtered[time_columns].to_numpy()[range(len(df_filtered)), min_indices]
-        df_filtered['пешком'] = df_filtered[walk_columns].to_numpy()[range(len(df_filtered)), min_indices]
+        df_filtered['станция'] = df_filtered[station_columns].to_numpy()[
+            range(len(df_filtered)), min_indices]
+        df_filtered['время'] = df_filtered[time_columns].to_numpy()[
+            range(len(df_filtered)), min_indices]
+        df_filtered['пешком'] = df_filtered[walk_columns].to_numpy()[
+            range(len(df_filtered)), min_indices]
 
-        df_filtered.drop(columns=station_columns + time_columns + walk_columns, inplace=True)
-
+        df_filtered.drop(columns=station_columns +
+                         time_columns + walk_columns, inplace=True)
 
         st.subheader("Пункт 8")
         st.write(
             'Для категориальных данных в столбце Материал стен заполним пропуски наиболее часто встречающимся значением (модой).')
         st.write(df_filtered['Материал стен'].unique())
-        df_filtered['Материал стен'] = df_filtered['Материал стен'].fillna(df_filtered['Материал стен'].mode()[0])
+        df_filtered['Материал стен'] = df_filtered['Материал стен'].fillna(
+            df_filtered['Материал стен'].mode()[0])
 
         st.subheader("Пункт 9")
         st.write('Проверим уникальные значения в столбцах Отделка и Ремонт ')
@@ -147,13 +165,16 @@ def main():
             'чистовая': 'Чистовая отделка',
             'предчистовая': 'Предчистовая отделка'
         })
-        st.write('Заполним пропуски в столбце Ремонт значениями из столбца Отделка, если они отсутствуют')
-        df_filtered['Ремонт'] = df_filtered['Ремонт'].fillna(df_filtered['Отделка'])
+        st.write(
+            'Заполним пропуски в столбце Ремонт значениями из столбца Отделка, если они отсутствуют')
+        df_filtered['Ремонт'] = df_filtered['Ремонт'].fillna(
+            df_filtered['Отделка'])
         st.write('Удалим столбец Отделка')
         df_filtered = df_filtered.drop(columns=['Отделка'])
         st.write(
             'Для категориальных данных в столбце Ремонт заполним пропуски наиболее часто встречающимся значением (модой).')
-        df_filtered['Ремонт'] = df_filtered['Ремонт'].fillna(df_filtered['Ремонт'].mode()[0])
+        df_filtered['Ремонт'] = df_filtered['Ремонт'].fillna(
+            df_filtered['Ремонт'].mode()[0])
 
         st.subheader('Вывод')
         st.write(
@@ -163,7 +184,8 @@ def main():
         st.subheader('Валидация значений')
         st.write(
             'Выполним валидацию значений в числовых столбцах DataFrame, подсчитывая количество отрицательных значений в каждом из них.')
-        numeric_columns = df_filtered.select_dtypes(include=['int64', 'float64']).columns
+        numeric_columns = df_filtered.select_dtypes(
+            include=['int64', 'float64']).columns
 
         data = [
             {
@@ -173,8 +195,10 @@ def main():
             for column in numeric_columns
         ]
         st.write(pd.DataFrame(data))
-        st.write('Удалим строки, содержащие отрицательные значения в числовых столбцах.')
-        df_filtered = df_filtered[(df_filtered[numeric_columns] >= 0).all(axis=1)]
+        st.write(
+            'Удалим строки, содержащие отрицательные значения в числовых столбцах.')
+        df_filtered = df_filtered[(
+            df_filtered[numeric_columns] >= 0).all(axis=1)]
         st.subheader('Изучение поведения каждого признака')
         st.write('Переименуем колонки')
         df_filtered.rename(columns={
@@ -198,24 +222,28 @@ def main():
 
         df_filtered
 
-        st.write('Функция для визуализации распределений и boxplot числовых признаков')
+        st.write(
+            'Функция для визуализации распределений и boxplot числовых признаков')
 
         def plot_feature_distributions(data, features):
             for feature in features:
                 fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-                sns.histplot(data[feature], bins=30, kde=True, ax=axes[0], color='skyblue', edgecolor='black')
+                sns.histplot(data[feature], bins=30, kde=True,
+                             ax=axes[0], color='skyblue', edgecolor='black')
                 axes[0].set_title(f"Распределение '{feature}'", fontsize=14)
                 axes[0].set_xlabel(feature, fontsize=12)
                 axes[0].set_ylabel('Частота', fontsize=12)
                 axes[0].grid(visible=True, linestyle='--', alpha=0.6)
-                sns.boxplot(y=data[feature], ax=axes[1], color='lightgreen', width=0.5)
+                sns.boxplot(y=data[feature], ax=axes[1],
+                            color='lightgreen', width=0.5)
                 axes[1].set_title(f"Boxplot '{feature}'", fontsize=14)
                 axes[1].set_ylabel(feature, fontsize=12)
                 axes[1].grid(visible=True, linestyle='--', alpha=0.6)
                 plt.tight_layout()
                 st.pyplot(fig)
 
-        numerical_features = df_filtered.select_dtypes(include=['int64', 'float64']).columns.tolist()
+        numerical_features = df_filtered.select_dtypes(
+            include=['int64', 'float64']).columns.tolist()
         st.write("Числовые признаки:", numerical_features)
 
         if numerical_features:
@@ -269,7 +297,8 @@ def main():
             - **Boxplot**: Значение **1** преобладает, а **0** можно считать редким выбросом.')
             """)
 
-        st.subheader('Функция для визуализации взаимосвязи числовых признаков с целевой переменной')
+        st.subheader(
+            'Функция для визуализации взаимосвязи числовых признаков с целевой переменной')
 
         def plot_feature_price_relationships(data, features, target):
             features = [feature for feature in features if feature != target]
@@ -278,7 +307,8 @@ def main():
                 fig, ax = plt.subplots(figsize=(8, 6))  # Создаем фигуру и ось
                 sns.scatterplot(x=data[feature], y=data[target], color='cornflowerblue', edgecolor='black', alpha=0.7,
                                 ax=ax)
-                ax.set_title(f"Взаимосвязь '{feature}' с '{target}'", fontsize=14)
+                ax.set_title(f"Взаимосвязь '{feature}' с '{
+                             target}'", fontsize=14)
                 ax.set_xlabel(feature, fontsize=12)
                 ax.set_ylabel(target, fontsize=12)
                 ax.grid(visible=True, linestyle='--', alpha=0.6)
@@ -286,7 +316,8 @@ def main():
                 # Отображаем график через Streamlit
                 st.pyplot(fig)
 
-        plot_feature_price_relationships(df_filtered, numerical_features, 'Цена')
+        plot_feature_price_relationships(
+            df_filtered, numerical_features, 'Цена')
 
         st.subheader('Общие выводы по всем диаграммам рассеивания:')
         st.markdown("""
@@ -348,8 +379,10 @@ def main():
             diag_kind="kde",
             plot_kws={'alpha': 0.6}
         )
-        pairplot.fig.suptitle("Попарные распределения признаков", y=1.02, fontsize=16)
+        pairplot.fig.suptitle(
+            "Попарные распределения признаков", y=1.02, fontsize=16)
         st.pyplot(pairplot.fig)
+
 
 if __name__ == "__main__":
     main()
