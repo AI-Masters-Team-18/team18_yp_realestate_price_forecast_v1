@@ -2,8 +2,6 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from logging import config
-from urllib import request
 import streamlit as st
 import pandas as pd
 import seaborn as sns
@@ -206,7 +204,11 @@ def main():
         st.write(df_filtered["Ремонт"].unique())
         st.write("Приведём значения в столбце Отделка к единому формату")
         df_filtered["Отделка"] = df_filtered["Отделка"].replace(
-            {"без отделки": "Без отделки", "чистовая": "Чистовая отделка", "предчистовая": "Предчистовая отделка"}
+            {
+                "без отделки": "Без отделки",
+                "чистовая": "Чистовая отделка",
+                "предчистовая": "Предчистовая отделка",
+            }
         )
         st.write("Заполним пропуски в столбце Ремонт значениями из столбца Отделка, если они отсутствуют")
         df_filtered["Ремонт"] = df_filtered["Ремонт"].fillna(df_filtered["Отделка"])
@@ -230,7 +232,10 @@ def main():
         numeric_columns = df_filtered.select_dtypes(include=["int64", "float64"]).columns
 
         data = [
-            {"Название": column, "Кол-во отрицательных значений": (df_filtered[column] < 0).sum()}
+            {
+                "Название": column,
+                "Кол-во отрицательных значений": (df_filtered[column] < 0).sum(),
+            }
             for column in numeric_columns
         ]
         st.write(pd.DataFrame(data))
@@ -267,7 +272,14 @@ def main():
         def plot_feature_distributions(data, features):
             for feature in features:
                 fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-                sns.histplot(data[feature], bins=30, kde=True, ax=axes[0], color="skyblue", edgecolor="black")
+                sns.histplot(
+                    data[feature],
+                    bins=30,
+                    kde=True,
+                    ax=axes[0],
+                    color="skyblue",
+                    edgecolor="black",
+                )
                 axes[0].set_title(f"Распределение '{feature}'", fontsize=14)
                 axes[0].set_xlabel(feature, fontsize=12)
                 axes[0].set_ylabel("Частота", fontsize=12)
@@ -343,7 +355,12 @@ def main():
             for feature in features:
                 fig, ax = plt.subplots(figsize=(8, 6))  # Создаем фигуру и ось
                 sns.scatterplot(
-                    x=data[feature], y=data[target], color="cornflowerblue", edgecolor="black", alpha=0.7, ax=ax
+                    x=data[feature],
+                    y=data[target],
+                    color="cornflowerblue",
+                    edgecolor="black",
+                    alpha=0.7,
+                    ax=ax,
                 )
                 ax.set_title(f"Взаимосвязь '{feature}' с '{target}'", fontsize=14)
                 ax.set_xlabel(feature, fontsize=12)
@@ -355,8 +372,9 @@ def main():
 
         plot_feature_price_relationships(df_filtered, numerical_features, "Цена")
 
-        st.subheader('Общие выводы по всем диаграммам рассеивания:')
-        st.markdown("""
+        st.subheader("Общие выводы по всем диаграммам рассеивания:")
+        st.markdown(
+            """
 
         1. **Взаимосвязь "Расстояние до центра" с "Ценой"**:
            - Объекты, расположенные **ближе к центру** (меньшие значения расстояния), имеют более **высокие цены**.
@@ -408,15 +426,11 @@ def main():
         - **Удалённость от центра** является значимым фактором: **чем ближе к центру**, тем выше цена.
         - **Современные объекты** имеют преимущественно высокие цены.
         - Наблюдается **множество выбросов** во всех метриках, что требует дополнительного анализа для проверки достоверности данных.
-        """)
-        st.subheader('Попарные распределения признаков')
-        pairplot = sns.pairplot(
-            df_filtered,
-            diag_kind="kde",
-            plot_kws={'alpha': 0.6}
+        """
         )
-        pairplot.fig.suptitle(
-            "Попарные распределения признаков", y=1.02, fontsize=16)
+        st.subheader("Попарные распределения признаков")
+        pairplot = sns.pairplot(df_filtered, diag_kind="kde", plot_kws={"alpha": 0.6})
+        pairplot.fig.suptitle("Попарные распределения признаков", y=1.02, fontsize=16)
         st.pyplot(pairplot.fig)
 
         URL = "http://127.0.0.1:8000"  # для вызова FastAPI
@@ -499,7 +513,10 @@ def main():
                     try:
                         request_data_fit = {
                             "model_id": model_id,
-                            "hyperparams": {"alpha": alpha_input, "max_iter": max_iter_input},
+                            "hyperparams": {
+                                "alpha": alpha_input,
+                                "max_iter": max_iter_input,
+                            },
                             "dataframe": df_filtered.to_dict(orient="records"),
                         }
                         response = requests.post(f"{URL}/fit", json=request_data_fit)
@@ -570,7 +587,12 @@ def main():
                             title="Кривая обучения для Ridge регрессии",
                             xaxis_title="Объем обучающей выборки",
                             yaxis_title="Ошибка (MSE)",
-                            legend=dict(x=0, y=1, bgcolor="rgba(255, 255, 255, 0)", bordercolor="rgba(0, 0, 0, 0)"),
+                            legend=dict(
+                                x=0,
+                                y=1,
+                                bgcolor="rgba(255, 255, 255, 0)",
+                                bordercolor="rgba(0, 0, 0, 0)",
+                            ),
                             template="plotly_white",
                         )
                         st.plotly_chart(fig)
