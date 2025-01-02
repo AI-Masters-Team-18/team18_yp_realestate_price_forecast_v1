@@ -29,7 +29,7 @@ class FitResponse(BaseModel):
     message: str
     
 class PredictRequest(BaseModel):
-    model_id: Optional[str]
+    model_id: Optional[str] = Field(None, description="ID модели")
     input_data: Dict[str, str]
 
 class PredictResponse(BaseModel):

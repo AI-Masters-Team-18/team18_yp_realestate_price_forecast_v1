@@ -2,11 +2,13 @@ import logging
 import os
 from re import S
 from urllib import response
+from matplotlib.pylab import det
 import pandas as pd
 from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File
 from typing import Annotated
 
 import pip
+from streamlit import dataframe
 
 from models import (
     ModelListResponse, ModelInfo, SetModelRequest,
@@ -35,7 +37,7 @@ def get_models():
             model_id=mid,
             description=data["description"],
             is_active=data["is_active"],
-            detailed_info=None
+            detailed_info=data.get("detailed_info")
             ))
     return ModelListResponse(models=model_list)
 
@@ -74,8 +76,11 @@ def fit_model(req: FitRequest, background_tasks: BackgroundTasks):
         try:
             alpha = float(req.hyperparams.get("alpha", 1.0))
             max_iter = int(req.hyperparams.get("max_iter", 1000))
+            if alpha <= 0 or max_iter <= 0:
+                raise HTTPException(status_code=400, detail="Invalid hyperparameters")
             pipeline = build_pipeline(alpha=alpha, max_iter=max_iter)
-            trained_pipeline, r2, rmse = train_pipeline(pipeline)
+            dataframe = req.dataframe
+            trained_pipeline, r2, rmse = train_pipeline(dataframe, pipeline)
             MODELS[mid]["pipeline"] = trained_pipeline
             logger.info(f"Модель {mid} обучена: R2={r2:.4f}, RMSE={rmse:.4f}")
             
@@ -91,14 +96,25 @@ def fit_model(req: FitRequest, background_tasks: BackgroundTasks):
 def get_model_info(mid: str):
     if mid not in MODELS:
         raise HTTPException(status_code=404, detail="Model not found")
-    trained_pipeline = MODELS[mid]["pipeline"]
+    
+    pipeline = MODELS[mid]["pipeline"]
     description = MODELS[mid]["description"]
     is_active = MODELS[mid]["is_active"] 
-    alpha = trained_pipeline.named_steps['model'].alpha
-    max_iter = trained_pipeline.named_steps['model'].max_iter
-    coefficients = trained_pipeline.named_steps['model'].coef_
-    intercept = trained_pipeline.named_steps['model'].intercept_
-    feature_names = trained_pipeline.named_steps['preprocessor'].get_feature_names_out()
+    
+    if pipeline is None:
+        return ModelInfo(
+            model_id=mid,
+            description=MODELS[mid]["description"],
+            is_active=MODELS[mid]["is_active"],
+            detailed_info=None
+        )
+        
+    model = pipeline.named_steps['model']
+    alpha = model.alpha
+    max_iter = model.max_iter
+    coefficients = model.coef_
+    intercept = model.intercept_
+    feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out()
     coefficients_dict = {feature: coef for feature, coef in zip(feature_names, coefficients)}
     detailed_info = {
         "alpha": alpha,
@@ -111,7 +127,7 @@ def get_model_info(mid: str):
         model_id=mid,
         description=description,
         is_active=is_active,
-        detailed_info=detailed_info
+        detailed_info=detailed_info if detailed_info else None
     )
     return response
     
@@ -146,6 +162,10 @@ def upload_dataset(file: Annotated[UploadFile, File(...)]):
     """
     Загрузка CSV в /app/data/df_filtered.csv
     """
+    file_name = file.filename
+    if file_name and not file_name.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Invalid file format. Please upload a CSV file.")
+
     os.makedirs("/app/data", exist_ok=True)
     save_path = "/app/data/df_filtered.csv"
 
@@ -203,8 +223,7 @@ def get_learning_curve(req: FitRequest):
     # Вычисление learning curve
     train_sizes = [0.1, 0.25, 0.5, 0.75, 1.0]
     try: 
-        train_sizes_abs, train_scores, test_scores = learning_curve(
-            model, X, y, train_sizes=train_sizes, cv=5, scoring="neg_mean_squared_error")
+        train_sizes_abs, train_scores, test_scores, _, _ = learning_curve(model, X, y, train_sizes=train_sizes, cv=5, scoring="neg_mean_squared_error")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during learning curve calculation: {str(e)}")
     

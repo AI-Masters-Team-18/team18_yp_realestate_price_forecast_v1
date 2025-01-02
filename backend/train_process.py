@@ -1,13 +1,14 @@
 import pandas as pd
 import os
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.metrics import r2_score, root_mean_squared_error, mean_squared_error
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import Ridge
 from sklearn.compose import ColumnTransformer
 from category_encoders import LeaveOneOutEncoder
 from sklearn.base import BaseEstimator, TransformerMixin
+from typing import List, Dict
 
 class RoomTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, column="Кол-во комнат"):
@@ -47,13 +48,12 @@ def build_pipeline(alpha=1.0, max_iter=1000):
     ])
     return pipeline
 
-def train_pipeline(pipeline, test_size=0.3, random_state=42):
-    csv_path = "/app/data/df_filtered.csv"
-    if not os.path.exists(csv_path):
-        raise FileNotFoundError("CSV dataset not found! Please upload it first.")
+def train_pipeline(df: List[Dict], pipeline, test_size=0.3, random_state=42):
+    # if not os.path.exists(csv_path):
+    #     raise FileNotFoundError("CSV dataset not found! Please upload it first.")
 
-    df = pd.read_csv(csv_path, sep=',', engine='python')
-
+    # df = pd.read_csv(csv_path, sep=',', engine='python')
+    df = pd.DataFrame(df)
     if 'Цена' not in df.columns:
         raise ValueError("Колонка 'Цена' не найдена в CSV! "
                          "Проверьте, что в вашем CSV столбец назван именно 'Цена'.")
@@ -69,6 +69,6 @@ def train_pipeline(pipeline, test_size=0.3, random_state=42):
 
     y_pred = pipeline.predict(X_test)
     r2 = r2_score(y_test, y_pred)
-    rmse = mean_squared_error(y_test, y_pred, squared=False)
+    rmse = root_mean_squared_error(y_test, y_pred)
 
     return pipeline, r2, rmse
