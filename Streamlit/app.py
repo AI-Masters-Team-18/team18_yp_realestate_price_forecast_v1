@@ -1,8 +1,19 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from logging import config
+from urllib import request
 import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import json
+import requests
+from backend.models import SetModelRequest
+import plotly.graph_objects as go
+
+
 
 
 def main():
@@ -58,8 +69,7 @@ def main():
         st.subheader("Пункт 1")
         columns_to_clean = ['до центра', 'Площадь квартиры', 'Жилая площадь', 'Высота потолков', 'цена',
                             'Площадь кухни']
-        st.write(f"Преобразуем значения столбцов {
-                 columns_to_clean} в числовой формат (float64), заменим запятые на точки, некорректные значения преобразуем в NaN, а затем заполним их медианой соответствующего столбца")
+        st.write(f"Преобразуем значения столбцов {columns_to_clean} в числовой формат (float64), заменим запятые на точки, некорректные значения преобразуем в NaN, а затем заполним их медианой соответствующего столбца")
         for column in columns_to_clean:
             df_filtered[column] = (
                 df_filtered[column]
@@ -95,8 +105,7 @@ def main():
 
         st.subheader("Пункт 4")
         st.write("Преобразуем значения столбца Год постройки в целочисленный формат (int), некорректные значения заменим на 0, чтобы обеспечить консистентность данных для дальнейшего анализа.")
-        df_filtered['Год постройки'] = df_filtered['Год постройки'].fillna(
-            0).astype(int)
+        df_filtered['Год постройки'] = df_filtered['Год постройки'].fillna(0).astype(int)
 
         st.subheader("Пункт 5")
         st.write("Объединим столбцы Год постройки и Срок сдачи в один столбец Год постройки, подставляя значения из Срок сдачи, если данные в Год постройки отсутствуют. Это упростит структуру данных и устранит дублирование.")
@@ -307,8 +316,7 @@ def main():
                 fig, ax = plt.subplots(figsize=(8, 6))  # Создаем фигуру и ось
                 sns.scatterplot(x=data[feature], y=data[target], color='cornflowerblue', edgecolor='black', alpha=0.7,
                                 ax=ax)
-                ax.set_title(f"Взаимосвязь '{feature}' с '{
-                             target}'", fontsize=14)
+                ax.set_title(f"Взаимосвязь '{feature}' с '{target}'", fontsize=14)
                 ax.set_xlabel(feature, fontsize=12)
                 ax.set_ylabel(target, fontsize=12)
                 ax.grid(visible=True, linestyle='--', alpha=0.6)
@@ -382,7 +390,180 @@ def main():
         pairplot.fig.suptitle(
             "Попарные распределения признаков", y=1.02, fontsize=16)
         st.pyplot(pairplot.fig)
+        
+        URL = "http://127.0.0.1:8000" # для вызова FastAPI
+        
+        
+        st.title("Создание новой модели")
+        # Реализация возможности обучения новой модели
+        model_id = st.text_input("Введите ID модели:")
+        
+        #Создаем модель
+        st.header("Создать новую модель")
+        with st.form("create_model"):
+            new_model_id = st.text_input("Введите ID новой модели", value="model_X")
+            submitted = st.form_submit_button("Создать модель")
+            if submitted:
+                payload = {"model_id": new_model_id}
+                resp = requests.post(f"{URL}/models/create", json=payload)
+                if resp.status_code == 200:
+                    st.success(resp.json()["message"])
+                else:
+                    st.error(resp.text)
+        #Обучаем модель
+        st.header("Выбираем модель и обучаем")
+        #получаем список созданных моделей
+        try:
+            resp_models = requests.get(f"{URL}/models")
+            resp_models.raise_for_status()
+            models_data = resp_models.json().get("models", [])
+            if not models_data:
+                st.warning("Модели не найдены")
+            else:
+                for m in models_data:
+                    try:
+                        #Показываем детали модели, включая коэффициенты с гиперпараметрами, если модели уже были обучены
+                        resp_model = requests.get(f"{URL}/models/{m['model_id']}")
+                        resp_model.raise_for_status()
+                        model_data = resp_model.json()
+                        st.write(f"**{m['model_id']}**  Active={m['is_active']}  | {m['description']} | {model_data['detailed_info']}")
+                    except requests.exceptions.RequestException as e:
+                        st.warning(f"Не удалось получить данные для модели {m['model_id']}: {e}")
+        except requests.exceptions.RequestException as e:
+            st.error("Ошибка при получении списка моделей")
+            models_data = []
+        except Exception as e:
+            st.error(f"Ошибка: {e}")
+        
+        #Выбор модели
+        if models_data:
+            model_options = [m["model_id"] for m in models_data]
+            model_id = st.selectbox("Выберите модель", model_options)
+            if model_id:
+                st.write(f"Выбрана модель: {model_id}. Введите гиперпараметры модели")
+                alpha_input = st.number_input("alpha", value=1.0)
+                max_iter_input = st.number_input("max_iter", value=1000)
+                
+            #обучаем выбранную модель
+            if st.button("Обучить модель") and alpha_input and max_iter_input:
+                if not model_id:
+                    st.error("Выбор ID модели обязателен")
+                elif not uploaded_file:
+                    st.error("Загрузите файл с данными")
+                else: 
+                    #перед обучением, сначала нужно сделать ее активной
+                    try: 
+                        request_body = SetModelRequest(model_id=model_id).dict() #преобразуем в dict, чтобы requests смог преобразовать 
+                        response = requests.post(f"{URL}/models/set", json=request_body)
+                        response.raise_for_status()
+                        if response.status_code == 200:
+                            response_data = response.json()
+                            if response_data.get("status") == "OK":
+                                st.success(response_data.get("message")) #показываем пользователю успешное сообщение от сервера
+                    except requests.exceptions.HTTPError as e:
+                        st.error(f"Ошибка при попытке установке модели: {e.response.status_code} - {e.response.text}")
+                        return
+                    except requests.exceptions.RequestException as e:
+                        st.error(f"Ошибка при попытке установке модели: {e}")
+                        return
+                    #потом обучаем модель
+                    try:
+                        request_data_fit = {
+                            "model_id": model_id,
+                            "hyperparams": {
+                                "alpha": alpha_input,
+                                "max_iter": max_iter_input
+                            },
+                            "dataframe": df_filtered.to_dict(orient="records"),
+                        }
+                        response = requests.post(f'{URL}/fit', json=request_data_fit)
+                        response.raise_for_status()
+                        if response.status_code == 201:
+                            st.success("Модель начала обучаться!")
+                            st.json(response.json())
+                    except requests.exceptions.HTTPError as e:
+                        st.error(f"Ошибка сервера: {e.response.status_code} - {e.response.text}")
+                        return
+                    except requests.exceptions.RequestException as e:
+                        st.error(f"Ошибка клиента при запросе: {e}")
+                        return
+                    except json.JSONDecodeError:
+                        st.error("Ошибка при загрузке гиперпараметров")
+                        return 
+                    except Exception as err:
+                        st.error(f"Ошибка: {str(err)}")
+                        return 
+                #показываем детали обученной модели и кривую обучения 
+                st.subheader("Детали обученной модели")
+                try:
+                    #показываем на клиенте детали обученной модели
+                    resp_model = requests.get(f"{URL}/models/{model_id}")
+                    resp_model.raise_for_status()
+                    model_data = resp_model.json()
+                    if model_data:
+                        st.write(f'Детали обученной модели: {model_data}')
+                    else:
+                        st.warning("Данные модели не найдены")
+                    #показываем кривую обучения
+                    hyperparams = {model_data.get("alpha"), model_data.get("max_iter")}
+                    model_id = model_data.get("model_id")
+                    request_structure = {
+                        "model_id": model_id,
+                        "hyperparams": hyperparams,
+                        "dataframe": df_filtered.to_dict(orient="records")
+                    }
+                    response = requests.post(f'{URL}/plot_learning_curve', json=request_structure)
+                    response.raise_for_status()
+                    if response.status_code == 200:
+                        st.write("Кривая обучения")
+                        train_sizes = response.json().get("train_sizes")
+                        train_scores_mean = response.json().get("train_scores_mean")
+                        test_scores_mean = response.json().get("test_scores_mean")
 
 
+                        fig = go.Figure()
+                        fig.add_trace(go.Scatter(
+                            x=train_sizes,
+                            y=train_scores_mean,
+                            mode='lines+markers',
+                            name='Training Error',
+                            line=dict(color='blue')
+                        ))
+                        fig.add_trace(go.Scatter(
+                            x=train_sizes,
+                            y=test_scores_mean,
+                            mode='lines+markers',
+                            name='Cross-validation Error',
+                            line=dict(color='red')
+                        ))
+                        
+                        fig.update_layout(
+                            title="Кривая обучения для Ridge регрессии",
+                            xaxis_title="Объем обучающей выборки",
+                            yaxis_title="Ошибка (MSE)",
+                            legend=dict(
+                                x=0,
+                                y=1,
+                                bgcolor="rgba(255, 255, 255, 0)",
+                                bordercolor="rgba(0, 0, 0, 0)"
+                            ),
+                            template="plotly_white"
+                        )
+                        st.plotly_chart(fig)
+                except requests.exceptions.HTTPError as e:
+                    st.error(f"Ошибка сервера: {e.response.status_code} - {e.response.text}")
+                    return
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Ошибка при получении информации о модели: {e}")
+                    return
+                except Exception as e:
+                    st.error(f"Ошибка: {e}")
+                    return
+                
+                
+                
+        
+            
+        
 if __name__ == "__main__":
     main()

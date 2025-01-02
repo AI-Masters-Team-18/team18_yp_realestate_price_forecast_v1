@@ -1,0 +1,9 @@
+fastapi==0.95.2
+uvicorn==0.22.0
+pydantic==1.10.8
+pandas==2.0.3
+numpy==1.23.5
+scikit-learn==1.2.2
+category_encoders==2.6.0
+openpyxl==3.1.2
+python-multipart==0.0.5
