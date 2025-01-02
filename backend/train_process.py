@@ -10,6 +10,7 @@ from category_encoders import LeaveOneOutEncoder
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing import List, Dict
 
+
 class RoomTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, column="Кол-во комнат"):
         self.column = column
@@ -23,30 +24,30 @@ class RoomTransformer(BaseEstimator, TransformerMixin):
         return X_
 
     def transform_rooms(self, value):
-        if value == '5+':
+        if value == "5+":
             return 5
-        elif value == 'free':
+        elif value == "free":
             return 0.5
         else:
             return int(value)
 
+
 def build_pipeline(alpha=1.0, max_iter=1000):
-    categorical_features = ['Ремонт', 'Материал стен', 'Тип жилья']
+    categorical_features = ["Ремонт", "Материал стен", "Тип жилья"]
     preprocessor = ColumnTransformer(
         transformers=[
-            ('room_transform', RoomTransformer("Кол-во комнат"), ['Кол-во комнат']),
-            ('loo_encoder', LeaveOneOutEncoder(sigma=0.4), ['Станция']),
-            ('cat', OneHotEncoder(drop='first', sparse_output=False), categorical_features)
+            ("room_transform", RoomTransformer("Кол-во комнат"), ["Кол-во комнат"]),
+            ("loo_encoder", LeaveOneOutEncoder(sigma=0.4), ["Станция"]),
+            ("cat", OneHotEncoder(drop="first", sparse_output=False), categorical_features),
         ],
-        remainder='passthrough'
+        remainder="passthrough",
     )
 
-    pipeline = Pipeline([
-        ('preprocessor', preprocessor),
-        ('scaler', StandardScaler()),
-        ('model', Ridge(alpha=alpha, max_iter=max_iter))
-    ])
+    pipeline = Pipeline(
+        [("preprocessor", preprocessor), ("scaler", StandardScaler()), ("model", Ridge(alpha=alpha, max_iter=max_iter))]
+    )
     return pipeline
+
 
 def train_pipeline(df: List[Dict], pipeline, test_size=0.3, random_state=42):
     # if not os.path.exists(csv_path):
@@ -54,16 +55,13 @@ def train_pipeline(df: List[Dict], pipeline, test_size=0.3, random_state=42):
 
     # df = pd.read_csv(csv_path, sep=',', engine='python')
     df = pd.DataFrame(df)
-    if 'Цена' not in df.columns:
-        raise ValueError("Колонка 'Цена' не найдена в CSV! "
-                         "Проверьте, что в вашем CSV столбец назван именно 'Цена'.")
+    if "Цена" not in df.columns:
+        raise ValueError("Колонка 'Цена' не найдена в CSV! " "Проверьте, что в вашем CSV столбец назван именно 'Цена'.")
 
-    X = df.drop('Цена', axis=1)
-    y = df['Цена']
+    X = df.drop("Цена", axis=1)
+    y = df["Цена"]
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=random_state
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
 
     pipeline.fit(X_train, y_train)
 
