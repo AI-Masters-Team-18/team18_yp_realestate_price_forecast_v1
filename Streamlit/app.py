@@ -1,7 +1,5 @@
 import sys
 from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 import streamlit as st
 import pandas as pd
 import seaborn as sns
@@ -11,6 +9,8 @@ import json
 import requests
 from backend.models import SetModelRequest
 import plotly.graph_objects as go
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 
 def main():
@@ -469,7 +469,7 @@ def main():
                     except requests.exceptions.RequestException as e:
                         st.warning(f"Не удалось получить данные для модели {m['model_id']}: {e}")
         except requests.exceptions.RequestException as e:
-            st.error("Ошибка при получении списка моделей")
+            st.error(f"Ошибка при получении списка моделей: {e}")
             models_data = []
         except Exception as e:
             st.error(f"Ошибка: {e}")
