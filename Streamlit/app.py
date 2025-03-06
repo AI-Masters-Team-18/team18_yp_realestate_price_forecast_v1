@@ -58,8 +58,8 @@ def main():
         st.subheader("Пункт 1")
         columns_to_clean = ['до центра', 'Площадь квартиры', 'Жилая площадь', 'Высота потолков', 'цена',
                             'Площадь кухни']
-        st.write(f"Преобразуем значения столбцов {
-                 columns_to_clean} в числовой формат (float64), заменим запятые на точки, некорректные значения преобразуем в NaN, а затем заполним их медианой соответствующего столбца")
+        st.write(f"""Преобразуем значения столбцов {
+        columns_to_clean} в числовой формат (float64), заменим запятые на точки, некорректные значения преобразуем в NaN, а затем заполним их медианой соответствующего столбца""")
         for column in columns_to_clean:
             df_filtered[column] = (
                 df_filtered[column]
@@ -144,10 +144,14 @@ def main():
             range(len(df_filtered)), min_indices]
         df_filtered['пешком'] = df_filtered[walk_columns].to_numpy()[
             range(len(df_filtered)), min_indices]
-
-        df_filtered.drop(columns=station_columns +
-                         time_columns + walk_columns, inplace=True)
-
+        df_filtered.drop(
+            columns=(
+                station_columns
+                + time_columns
+                + walk_columns
+            ),
+            inplace=True
+        )
         st.subheader("Пункт 8")
         st.write(
             'Для категориальных данных в столбце Материал стен заполним пропуски наиболее часто встречающимся значением (модой).')
@@ -307,8 +311,10 @@ def main():
                 fig, ax = plt.subplots(figsize=(8, 6))  # Создаем фигуру и ось
                 sns.scatterplot(x=data[feature], y=data[target], color='cornflowerblue', edgecolor='black', alpha=0.7,
                                 ax=ax)
-                ax.set_title(f"Взаимосвязь '{feature}' с '{
-                             target}'", fontsize=14)
+                ax.set_title(
+                    f"Взаимосвязь '{feature}' с '{target}'",
+                    fontsize=14
+                )
                 ax.set_xlabel(feature, fontsize=12)
                 ax.set_ylabel(target, fontsize=12)
                 ax.grid(visible=True, linestyle='--', alpha=0.6)
