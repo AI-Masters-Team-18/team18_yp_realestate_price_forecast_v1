@@ -12,12 +12,12 @@ general_directory = '/Users/terrylimax/Desktop/Filtered data/'
 combined_csv = pd.DataFrame()
 print(sys.version)
 # Пройдем по всем файлам в директории
-for dirpath, dirnames, filenames in os.walk(general_directory): # Используем os.walk, чтобы получить доступ к поддиректориям
+for dirpath, dirnames, filenames in os.walk(general_directory):  # Используем os.walk, чтобы получить доступ к поддиректориям
     for filename in filenames:
         if filename.endswith(".csv"):
-            file_path = os.path.join(dirpath, filename) # Получим путь к файлу
-            df = pd.read_csv(file_path, sep=';') # Прочитаем файл
-            combined_csv = pd.concat([combined_csv, df], ignore_index=True) # Объединим его с общим DataFrame
+            file_path = os.path.join(dirpath, filename)  # Получим путь к файлу
+            df = pd.read_csv(file_path, sep=';')  # Прочитаем файл
+            combined_csv = pd.concat([combined_csv, df], ignore_index=True)  # Объединим его с общим DataFrame
 
 # Сохраним итоговый CSV
 combined_csv.to_csv("united_filtered.csv", index=False, sep=';')
