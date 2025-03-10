@@ -4,6 +4,7 @@
 # Игнорировать файлы настроек IDE
 .vscode/
 .idea/
+*.code-workspace
 
 # Игнорировать скомпилированные файлы Python
 __pycache__/
@@ -16,3 +17,9 @@ __pycache__/
 # Игнорировать файлы конфигурации окружения
 .env
 venv/
+
+df_filtered.xlsx
+data.xlsx
+
+# Игнорирование служебного каталога CatBoost
+catboost_info/
